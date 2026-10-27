@@ -1,0 +1,17 @@
+[build-system]
+requires = ["setuptools==83.0.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "bn5211-monocular-depth-estimation"
+version = "0.1.0"
+description = "BN5211 endoscopic monocular depth estimation: data, baseline, models, and evaluation"
+readme = "README.md"
+requires-python = ">=3.11,<3.12"
+dynamic = ["dependencies"]
+
+[tool.setuptools.dynamic]
+dependencies = {file = ["requirements.txt"]}
+
+[tool.setuptools.packages.find]
+where = ["src"]

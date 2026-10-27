@@ -1,0 +1,36 @@
+# Python and local environments
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.cache/
+.venv/
+venv/
+build/
+dist/
+.coverage
+htmlcov/
+
+# Local data, experiment outputs, and model weights
+/data/
+/docs/
+/outputs/
+/reports/
+/weights/
+/checkpoints/
+*.zip
+*.pt
+*.pth
+*.ckpt
+*.safetensors
+
+# Local editor and operating-system files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+.env
+.env.*
+!.env.example
