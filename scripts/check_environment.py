@@ -19,6 +19,9 @@ DEPENDENCIES = {
     "torch": "torch",
     "torchvision": "torchvision",
     "matplotlib": "matplotlib",
+    "scipy": "scipy",
+    "tqdm": "tqdm",
+    "opencv-python": "cv2",
 }
 
 

@@ -1,0 +1,45 @@
+{
+  "model": "highlight_c1",
+  "weights_sha256": {
+    "depth_anything_v2_vits.pth": "715fade13be8f229f8a70cc02066f656f2423a59effd0579197bbf57860e1378",
+    "highlight_c1/seed_123_best.pth": "bbc7ff76c5ccb89b6bbd70e05c0510993acb7c73057bc9956cd9e42140c0060a"
+  },
+  "model_repository": "https://github.com/DepthAnything/Depth-Anything-V2",
+  "model_commit": "a561b849ebae10a6f5ef49e26c83cbbcd36c71bf",
+  "preprocessing": {
+    "input_size": 518,
+    "keep_aspect_ratio": true,
+    "resize_method": "lower_bound",
+    "ensure_multiple_of": 14,
+    "input_interpolation": "OpenCV INTER_CUBIC",
+    "normalization_mean": [
+      0.485,
+      0.456,
+      0.406
+    ],
+    "normalization_std": [
+      0.229,
+      0.224,
+      0.225
+    ],
+    "output_interpolation": "bilinear",
+    "align_corners": true,
+    "output_shape": [
+      1080,
+      1350
+    ],
+    "refinement_depth_normalization": "mm / 100; multiply output by 100; no clipping"
+  },
+  "calibration_split": "dev",
+  "calibration": {
+    "formula": "depth_mm = 1 / (a * relative + b)",
+    "a": 0.014460004298744292,
+    "b": 0.007217614873792536,
+    "development_frame_ids": "0000-0039",
+    "status": "returned frozen parameters; original sampling arrays and generation code unavailable; refitting equivalence unverified"
+  },
+  "seed": 123,
+  "prediction_origin": "returned historical predictions; no integrated inference equivalence claimed",
+  "historical_gt_evaluation": "float32 depth_mm / 100 * 100; integrated evaluator uses original shared depth_mm",
+  "primary_eligibility": true
+}

@@ -1,0 +1,16 @@
+{
+  "model": "DepthAnythingV2-Relative-Small",
+  "encoder": "vits",
+  "input_size": 518,
+  "official_repository": "https://github.com/DepthAnything/Depth-Anything-V2",
+  "repository_commit": "a561b849ebae10a6f5ef49e26c83cbbcd36c71bf",
+  "checkpoint_sha256": "715fade13be8f229f8a70cc02066f656f2423a59effd0579197bbf57860e1378",
+  "development_frames": 61,
+  "test_frames": 103,
+  "prediction_dtype": "float32",
+  "prediction_shape": [
+    1080,
+    1350
+  ],
+  "prediction_unit": "relative"
+}

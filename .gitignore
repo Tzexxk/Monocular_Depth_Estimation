@@ -34,3 +34,12 @@ Thumbs.db
 .env
 .env.*
 !.env.example
+
+# Local integration and model-tool files
+/configs/*.local.json
+/configs/*.local.yaml
+/configs/*.local.yml
+/third_party/
+*.whl
+*.part
+.ipynb_checkpoints/

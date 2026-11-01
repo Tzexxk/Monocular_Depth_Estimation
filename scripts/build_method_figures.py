@@ -20,8 +20,8 @@ FIGURES = [
              ["Original geometry; RGB, depth_mm and valid_mask", "CPU loading: batch size 1, no shuffle"]),
             ("D", 60, 580, 500, 105, "Constant-median-depth baseline",
              ["One median fitted on development GT", "Fixed value for all test frames"]),
-            ("E", 640, 580, 500, 105, "Released monocular depth model",
-             ["Model preprocessing + dev-only calibration", "Restore predictions to the original image grid"]),
+            ("E", 640, 580, 500, 105, "Depth Anything V2 + residual refinement",
+             ["Frozen dev inverse mapping; optional gated CNN", "Official full-grid output: align_corners=True"]),
             ("F", 320, 790, 560, 110, "Common evaluation",
              ["Original GT mask; identical 103 test frames", "AbsRel | RMSE (mm) | delta < 1.25"]),
             ("G", 320, 990, 560, 90, "Comparison and report",
@@ -107,6 +107,47 @@ FIGURES = [
         ],
     },
 ]
+
+FIGURES.append({
+    "name": "pretrained_refinement_method", "size": (1200, 1740),
+    "title": "Depth Anything V2 and gated residual refinement",
+    "nodes": [
+        ("A", 220, 110, 760, 100, "Shared original RGB input",
+         ["RGB float32 [3,1080,1350] in [0,1]"]),
+        ("B", 220, 310, 760, 110, "Frozen Depth Anything V2 Relative Small",
+         ["ViT-S; 518 lower bound; ImageNet normalization",
+          "Full-grid relative output: bilinear, align_corners=True"]),
+        ("C", 220, 520, 760, 100, "Frozen development-set inverse calibration",
+         ["D0 = 1 / (a * relative + b), in millimeters"]),
+        ("D", 220, 720, 760, 110, "RGB and depth feature encoders",
+         ["RGB features: 16 channels; depth features: 16 channels",
+          "Depth input D0 / 100; HSV candidate mask: 1 channel"]),
+        ("E", 220, 930, 760, 110, "Highlight-aware gated fusion",
+         ["G = sigmoid(gate([RGB features, depth features, mask]))",
+          "Fused features = depth features + G * RGB features"]),
+        ("F", 220, 1140, 760, 110, "Multi-scale encoder and decoder",
+         ["Encoder 32 / 64; bottleneck 128; decoder 64 / 32",
+          "Skip connections; bilinear upsampling; residual output"]),
+        ("G", 220, 1350, 760, 110, "Residual depth prediction",
+         ["Normalized prediction = D0 / 100 + learned residual",
+          "Multiply by 100; original grid float32 millimeters"]),
+        ("H", 220, 1560, 760, 110, "Shared strict evaluation",
+         ["Original depth_mm and GT mask; no prediction clipping",
+          "C0 uses the same architecture with a zero highlight mask"]),
+    ],
+    "edges": [
+        ("A", "B", [(600, 210), (600, 310)]),
+        ("B", "C", [(600, 420), (600, 520)]),
+        ("C", "D", [(600, 620), (600, 720)]),
+        ("A", "D", [(980, 160), (1080, 160), (1080, 775), (980, 775)]),
+        ("D", "E", [(600, 830), (600, 930)]),
+        ("E", "F", [(600, 1040), (600, 1140)]),
+        ("F", "G", [(600, 1250), (600, 1350)]),
+        ("C", "G", [(220, 570), (120, 570), (120, 1405), (220, 1405)]),
+        ("G", "H", [(600, 1460), (600, 1560)]),
+    ],
+})
+
 
 
 def mermaid_source(figure):

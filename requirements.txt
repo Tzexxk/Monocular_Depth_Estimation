@@ -1,5 +1,5 @@
-# Verified snapshot: Biomedical-AI, Windows x64, Python 3.11.16, 2026-10-28.
-# Direct dependencies and their installed runtime dependency closure are pinned.
+# Base snapshot: Windows x64, Python 3.11.16, 2026-10-28.
+# All 26 installed pins checked locally; direct imports and CUDA smoke passed 2026-11-01.
 # Install: python -m pip install -r requirements.txt --extra-index-url https://download.pytorch.org/whl/cu132
 # Keep this file in PEP 508 format: pyproject.toml reads it as package metadata.
 
@@ -9,6 +9,13 @@ Pillow==11.1.0
 matplotlib==3.11.2
 torch==2.14.0+cu132
 torchvision==0.29.0+cu132
+
+# Calibration and returned refinement training/analysis
+# All below are installed and import-checked locally.
+scipy==1.17.1
+tqdm==4.70.0
+# Windows cp37-abi3 wheel; installed/import-checked with NumPy 2.4.6.
+opencv-python==4.13.0.92
 
 # Required transitive dependencies for the verified Windows environment
 contourpy==1.3.3
@@ -28,3 +35,6 @@ setuptools==83.0.0
 six==1.17.0
 sympy==1.14.0
 typing_extensions==4.16.0
+
+# Windows runtime dependency of tqdm
+colorama==0.4.6; platform_system == "Windows"
