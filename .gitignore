@@ -19,7 +19,7 @@ htmlcov/
 /outputs/
 /reports/
 /weights/
-/checkpoints/
+/checkpoints/*
 *.zip
 *.pt
 *.pth
@@ -43,3 +43,8 @@ Thumbs.db
 *.whl
 *.part
 .ipynb_checkpoints/
+
+# Include only the selected C1 checkpoint; keep every other artifact ignored.
+!/checkpoints/highlight_c1/
+/checkpoints/highlight_c1/*
+!/checkpoints/highlight_c1/seed_123_best.pth

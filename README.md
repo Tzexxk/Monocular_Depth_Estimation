@@ -106,24 +106,48 @@ a = 0.014460004298744292
 b = 0.007217614873792536
 ```
 
-`configs/inverse_calibration_clean.json` records fitting on development frames 0000–0039, validation on 0050–0060, 5,000 sampled pixels per training frame and seed 42. Original sample arrays and their generation code were not fully preserved. The provided parameters reproduce the archived relative-to-millimeter conversion, but exact regeneration of the original fit has not been established. They are retained as frozen inputs; refitting with `c3vd_models.calibration.fit_inverse_calibration` creates a new experiment.
+`configs/inverse_calibration_clean.json` records fitting on development frames 0000-0039, validation on 0050-0060, 5,000 sampled pixels per training frame and seed 42. Original sample arrays and their generation code were not fully preserved. The provided parameters reproduce the archived relative-to-millimeter conversion, but exact regeneration of the original fit has not been established. They are retained as frozen inputs; refitting with `c3vd_models.calibration.fit_inverse_calibration` creates a new experiment.
 
 Four returned residual architectures are available: Simple CNN, MultiScale, gated RGB/depth, and highlight-aware gated refinement. The last two share a 485,841-parameter architecture. The highlight-aware model uses HSV value >=220 and saturation <=100, followed by a 5×5 elliptical opening and dilation; its control uses a zero highlight channel. Model inputs use depth/100, and output is multiplied by 100. Outputs are not clipped. Refinement export retains cuDNN deterministic mode from the original Notebook; `--strict-fp32` additionally disables cuDNN/matmul TF32 and uses the highest float32 matmul precision, recording the actual settings in generation.json. The flag does not change weights, masks or calibration.
 
-Returned trained refinement weights are not distributed with this public repository and currently have no public release URL. To use a separately obtained checkpoint, record its hash and run:
+The included C1 checkpoint was produced by the original Google Colab refinement experiment, rather than downloaded from the DA V2 release or retrained during repository integration. DA V2 was frozen; its calibrated depth, RGB and HSV highlight mask were used to train the residual CNN against valid development GT pixels. Recorded training frames are `trans_t1_a/0000-0039` (40 frames), and validation frames are `trans_t1_a/0050-0060` (11 frames). The supplied file is the seed-123 run's selected checkpoint at **epoch 25**, chosen using validation masked L1; epoch 25 is the selected epoch, not a fixed training duration. Historical settings are recorded in [configs/experiment_config.json](configs/experiment_config.json), with the optimizer and retraining commands below.
+
+The selected original C1 seed-123 checkpoint is included in the repository at `checkpoints/highlight_c1/seed_123_best.pth` (5,873,475 bytes). It is the only checkpoint allowed by `.gitignore`; other checkpoints, official DA weights, data and generated predictions remain excluded. After this file is committed, both a clone and a `git archive` ZIP include it, so a separate C1 weight attachment is unnecessary.
+
+Verify the included file before running:
+
+```powershell
+Get-FileHash checkpoints/highlight_c1/seed_123_best.pth -Algorithm SHA256
+```
+
+Expected SHA-256: `bbc7ff76c5ccb89b6bbd70e05c0510993acb7c73057bc9956cd9e42140c0060a`. The official DA V2 source and pretrained weight still need to be obtained using the commands above. Dataset files are supplied separately.
+
+After installation, dataset preparation and official DA source/weight acquisition above, a fresh C1 run follows this complete chain. Use a new output root if it already exists:
+
+```powershell
+python scripts/infer_pretrained.py --split test --strict-fp32 --output-root outputs/c1_reproduction
+python scripts/export_predictions.py --method highlight_c1 --split test --relative-root outputs/c1_reproduction/intermediate/da_v2_relative --checkpoint checkpoints/highlight_c1/seed_123_best.pth --calibration configs/inverse_calibration_clean.json --device cuda --strict-fp32 --output-root outputs/c1_reproduction
+python scripts/evaluate_predictions.py --predictions outputs/c1_reproduction/predictions/highlight_c1 --output-dir outputs/c1_reproduction/results/highlight_c1 --method highlight_c1 --metadata outputs/c1_reproduction/predictions/highlight_c1/generation.json
+```
+
+This regenerates predictions and metrics in a separate directory. The complete 103-frame DA-to-C1 chain has not been executed after integration, and cross-environment DA millimeter differences remain unresolved. Including the selected checkpoint resolves access to the trained model; it does not establish exact reproduction of the historical scores.
+
+If relative predictions have already been generated in the default location, use the included checkpoint with:
 
 ```powershell
 python scripts/export_predictions.py --method highlight_c1 --checkpoint checkpoints/highlight_c1/seed_123_best.pth --device cuda --strict-fp32
 python scripts/evaluate_predictions.py --predictions outputs/predictions/highlight_c1 --output-dir outputs/results/highlight_c1 --method highlight_c1 --metadata outputs/predictions/highlight_c1/generation.json
 ```
 
-To produce new weights from prepared data and development relative predictions:
+To produce and evaluate new weights, first generate complete development and test relative predictions using the two `infer_pretrained.py` commands above. Then run:
 
 ```powershell
 python scripts/train_refinement.py --model highlight_c1 --seed 123 --output-root outputs/new_training --device cuda
+python scripts/export_predictions.py --method highlight_c1 --split test --relative-root outputs/intermediate/da_v2_relative --checkpoint outputs/new_training/checkpoints/highlight_c1/seed_123_best.pth --device cuda --strict-fp32 --output-root outputs/new_training
+python scripts/evaluate_predictions.py --predictions outputs/new_training/predictions/highlight_c1 --output-dir outputs/new_training/results/highlight_c1 --method highlight_c1 --metadata outputs/new_training/predictions/highlight_c1/generation.json
 ```
 
-This invokes the contributed AdamW/masked-L1 training loop: learning rate and weight decay 1e-4, batch size 1, maximum 30 epochs and patience 6. It uses development frames 0000–0039 for training and 0050–0060 for validation, with the original checkpoint-improvement threshold of 1e-5. This entry point has not been trained end to end after integration; do not label newly produced weights as the archived checkpoint. Existing checkpoint/output paths are refused.
+This invokes the contributed AdamW/masked-L1 training loop: learning rate and weight decay 1e-4, batch size 1, maximum 30 epochs and patience 6. It uses development frames 0000-0039 for training and 0050-0060 for validation, with the original checkpoint-improvement threshold of 1e-5. This entry point has not been trained end to end after integration; do not label newly produced weights as the archived checkpoint. Existing checkpoint/output paths are refused.
 
 ## Strict evaluation
 
@@ -139,7 +163,7 @@ The evaluator requires a complete canonical split, with float32 `[1080,1350]` mi
 | --- | --- |
 | AbsRel | mean(abs(pred−gt)/gt) |
 | RMSE (mm) | sqrt(mean((pred−gt)²)) |
-| Delta < 1.25 | mean(max(pred/gt,gt/pred) < 1.25), as a fraction |
+| Delta < 1.25 | mean(max(pred/gt, gt/pred) < 1.25), as a fraction |
 
 Sequence scores are arithmetic means of the 103 per-frame scores. Evaluation uses the shared original `depth_mm`, without a `/100*100` round trip. It does not fit scale, clip predictions or align against test GT.
 
@@ -170,7 +194,7 @@ scripts/                   # Data, baseline, inference, export and evaluation en
 tests/                     # Synthetic tests; no weights or data download required
 data/                      # Ignored archives, raw images and manifests
 weights/                   # Ignored pretrained source checkout and weights
-checkpoints/               # Ignored trained refinement weights
+checkpoints/               # Selected C1 seed-123 weight tracked; all others ignored
 outputs/predictions/       # Ignored METHOD/SEQUENCE/FRAME_ID.npy
 outputs/results/           # Ignored per-frame metrics, summary, config and figures
 outputs/intermediate/      # Ignored relative predictions
